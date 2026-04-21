@@ -2,8 +2,6 @@
 
 **Glint** is a high-performance web reconnaissance suite built for modern offensive engagements. Built with a **Dashboard-First** architecture, Glint eliminates host-level dependency hell using Docker while providing a real-time "Control Center" for monitoring web discovery.
 
-![Glint Dashboard Mockup](https://raw.githubusercontent.com/bivens-security-consulting/Glint/main/assets/preview.png)
-
 ## Key Features
 
 - **Real-time Live Activity Feed**: Watch screenshots and status discoveries pop into your dashboard instantly as Glint captures them.
