@@ -1,0 +1,8 @@
+flask
+playwright
+click
+rich
+python-slugify
+pyyaml
+jinja2
+aiohttp

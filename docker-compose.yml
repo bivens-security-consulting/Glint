@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  glint:
+    build: .
+    container_name: glint-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./projects:/app/projects
+      - ./.glint_config.yaml:/app/.glint_config.yaml
+    shm_size: '2gb' # Required for stable Chromium performance
+    restart: unless-stopped
+    stdin_open: true
+    tty: true

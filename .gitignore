@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+glint_scan_*/
+.DS_Store
+.env
+.ipynb_checkpoints/
+projects/*
