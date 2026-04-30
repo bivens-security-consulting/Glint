@@ -240,8 +240,7 @@ DASHBOARD_TEMPLATE = r"""
                         <img src="/media/{{ res.screenshot_path }}" loading="lazy">
                         {% else %}
                         <div style="height:100%; display:flex; align-items:center; justify-content:center; color:#333; font-weight:800;">ERROR</div>
-                        {% endif %}
-                        <div class="status-badge badge-{{ (res.get('status', 0) // 100) }}xx">{{ res.get('status') or '???' }}</div>
+                        <div class="status-badge badge-{{ ((res.get('status', 0)|int(default=0)) // 100) }}xx">{{ res.get('status') or '???' }}</div>
                     </div>
                     <div class="card-info">
                         <div class="card-url">{{ res.url }}</div>
@@ -439,7 +438,7 @@ DASHBOARD_TEMPLATE = r"""
             card.innerHTML = 
                 '<div class="img-wrap">' +
                     imgHtml +
-                    '<div class="status-badge badge-' + (Math.floor((res.status || 0) / 100)) + 'xx">' + (res.status || '???') + '</div>' +
+                    '<div class="status-badge badge-' + (Math.floor((parseInt(res.status) || 0) / 100)) + 'xx">' + (res.status || '???') + '</div>' +
                 '</div>' +
                 '<div class="card-info">' +
                     '<div class="card-url">' + res.url + '</div>' +
