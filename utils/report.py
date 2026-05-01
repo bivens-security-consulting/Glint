@@ -279,6 +279,22 @@ REPORT_TEMPLATE = r"""
                     <span class="tech-badge">{{ tech }}</span>
                     {% endfor %}
                 </div>
+                {% if result.extracted_urls %}
+                <div class="metadata" style="margin-top: 1.5rem;">
+                    <details>
+                        <summary style="cursor: pointer; color: var(--text-secondary); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">
+                            🔗 Extracted Links ({{ result.extracted_urls|length }})
+                        </summary>
+                        <ul style="list-style: none; padding: 0.8rem; background: #080808; border-radius: 6px; margin-top: 0.5rem; max-height: 200px; overflow-y: auto; font-size: 0.7rem;">
+                            {% for link in result.extracted_urls %}
+                            <li style="margin-bottom: 0.4rem; border-bottom: 1px solid #151515; padding-bottom: 0.2rem;">
+                                <a href="{{ link }}" target="_blank" style="color: #666; text-decoration: none; word-break: break-all; font-family: 'JetBrains Mono', monospace;">{{ link }}</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endfor %}

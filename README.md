@@ -27,20 +27,42 @@ The recommended way to run Glint is via **Docker Compose** for full persistence 
 
 ---
 
-## CLI Usage (Helper)
+## CLI & API Usage
+The CLI is a powerful helper for headless scanning or integrating Glint into other automation pipelines (API mode).
 
-The CLI is a lean helper for launching quick scans or updating the project config without touching the UI.
+### Standard Scanning
+```bash
+# Basic scan with default reporting
+python glint.py scan -i targets.txt
+
+# Scan using proxychains and extract all links from landing pages
+python glint.py scan -i targets.txt --proxychains --extract-links
+```
+
+### API Mode (JSON Output)
+Use the `--json` flag to suppress human-readable output and receive a pure JSON payload. This is ideal for piping into other tools like `jq` or external APIs.
 
 ```bash
-# Start a scan using the shared config
-python glint.py scan -pj InternalAlpha -i targets.txt
+# Scan and pipe results into a JSON file
+python glint.py scan -i targets.txt --extract-links --json > results.json
 
-# Launch the dashboard from the terminal
-python glint.py dash
-
-# View current configuration
-python glint.py config
+# Extract only valid URLs discovered from the scan
+python glint.py scan -i targets.txt --extract-links --json | jq '.[].extracted_urls[]'
 ```
+
+| Flag | Description |
+| :--- | :--- |
+| `-i, --input` | Path to the line-delimited target file. |
+| `--extract-links` | Scrape and resolve all `<a>` tags on the page. |
+| `--json` | Output pure JSON to `stdout` (logs/errors go to `stderr`). |
+| `--proxychains` | Optimize network timing for proxychains. |
+
+---
+
+## Remote File Access
+Glint stores all assets in the `projects/` directory. When running as an API, you can retrieve screenshots by referencing the `screenshot` filename returned in the JSON payload:
+- **Local Path**: `projects/screenshots/<filename>`
+- **Web App (if running)**: `http://localhost:8000/media/screenshots/<filename>`
 
 ---
 

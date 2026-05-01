@@ -240,8 +240,7 @@ DASHBOARD_TEMPLATE = r"""
                         <img src="/media/{{ res.screenshot_path }}" loading="lazy">
                         {% else %}
                         <div style="height:100%; display:flex; align-items:center; justify-content:center; color:#333; font-weight:800;">ERROR</div>
-                        {% endif %}
-                        <div class="status-badge badge-{{ (res.get('status', 0) // 100) }}xx">{{ res.get('status') or '???' }}</div>
+                        <div class="status-badge badge-{{ ((res.get('status', 0)|int(default=0)) // 100) }}xx">{{ res.get('status') or '???' }}</div>
                     </div>
                     <div class="card-info">
                         <div class="card-url">{{ res.url }}</div>
@@ -303,7 +302,7 @@ DASHBOARD_TEMPLATE = r"""
                 <label class="info-label">Project Name</label>
                 <input type="text" id="scanProject" style="background:#000; border:1px solid var(--border); color:#fff; padding:0.8rem; width:100%; border-radius:12px; outline:none;" value="{{ active_project or 'Glint' }}">
             </div>
-            <textarea id="scanTargets" placeholder="URL list (one per line)..."></textarea>
+            <textarea id="scanTargets" placeholder="http://example.com&#10;https://example.com&#10;127.0.0.1"></textarea>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                 <span style="font-size:0.75rem; color:var(--dim);">Fast Import:</span>
                 <button class="btn btn-dim" onclick="triggerNmapUpload()" style="padding: 4px 10px; font-size: 0.7rem;">📁 Import Nmap XML</button>
@@ -349,7 +348,12 @@ DASHBOARD_TEMPLATE = r"""
                     <input type="text" id="cfgProxy" placeholder="e.g. http://127.0.0.1:8080" style="background:#000; border:1px solid var(--border); color:#fff; padding:0.8rem; width:100%; border-radius:12px; outline:none;">
                 </div>
 
-                <div class="form-row" style="background:#111; padding:1.2rem; border-radius:12px; border:1px solid #222;">
+                <div class="form-group">
+                    <label class="info-label">Projects Directory</label>
+                    <input type="text" id="cfgOutputDir" style="background:#000; border:1px solid var(--border); color:#fff; padding:0.8rem; width:100%; border-radius:12px; outline:none;">
+                </div>
+
+                <div class="form-row" style="background:#111; padding:1.2rem; border-radius:12px; border:1px solid #222; flex-wrap: wrap; gap: 1.5rem;">
                     <div style="display:flex; align-items:center; gap:1rem;">
                         <input type="checkbox" id="cfgTech">
                         <label style="font-size:0.8rem; font-weight:600;">Enable Tech Detection</label>
@@ -357,6 +361,10 @@ DASHBOARD_TEMPLATE = r"""
                     <div style="display:flex; align-items:center; gap:1rem;">
                         <input type="checkbox" id="cfgProxychains">
                         <label style="font-size:0.8rem; font-weight:600;">Proxychains Mode</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:1rem;">
+                        <input type="checkbox" id="cfgInsecure">
+                        <label style="font-size:0.8rem; font-weight:600;">Insecure SSL</label>
                     </div>
                 </div>
             </div>
@@ -439,7 +447,7 @@ DASHBOARD_TEMPLATE = r"""
             card.innerHTML = 
                 '<div class="img-wrap">' +
                     imgHtml +
-                    '<div class="status-badge badge-' + (Math.floor((res.status || 0) / 100)) + 'xx">' + (res.status || '???') + '</div>' +
+                    '<div class="status-badge badge-' + (Math.floor((parseInt(res.status) || 0) / 100)) + 'xx">' + (res.status || '???') + '</div>' +
                 '</div>' +
                 '<div class="card-info">' +
                     '<div class="card-url">' + res.url + '</div>' +
@@ -547,6 +555,8 @@ DASHBOARD_TEMPLATE = r"""
                 document.getElementById('cfgProxy').value = cfg.proxy || '';
                 document.getElementById('cfgTech').checked = cfg.tech;
                 document.getElementById('cfgProxychains').checked = cfg.proxychains;
+                document.getElementById('cfgInsecure').checked = cfg.insecure;
+                document.getElementById('cfgOutputDir').value = cfg.output_dir;
                 
                 // Force lock on open
                 settingsLocked = false;
@@ -569,7 +579,9 @@ DASHBOARD_TEMPLATE = r"""
                 ports: document.getElementById('cfgPorts').value,
                 proxy: document.getElementById('cfgProxy').value || null,
                 tech: document.getElementById('cfgTech').checked,
-                proxychains: document.getElementById('cfgProxychains').checked
+                proxychains: document.getElementById('cfgProxychains').checked,
+                insecure: document.getElementById('cfgInsecure').checked,
+                output_dir: document.getElementById('cfgOutputDir').value
             };
 
             const resp = await fetch('/api/config', {

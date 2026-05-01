@@ -8,6 +8,7 @@ DEFAULT_CONFIG = {
     "ports": "80,443",
     "insecure": True,
     "tech": True,
+    "extract_links": False,
     "proxy": None,
     "proxychains": False,
     "output_dir": "projects"
