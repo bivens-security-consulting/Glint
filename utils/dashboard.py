@@ -359,10 +359,6 @@ DASHBOARD_TEMPLATE = r"""
                         <label style="font-size:0.8rem; font-weight:600;">Enable Tech Detection</label>
                     </div>
                     <div style="display:flex; align-items:center; gap:1rem;">
-                        <input type="checkbox" id="cfgExtractLinks">
-                        <label style="font-size:0.8rem; font-weight:600;">Extract Links</label>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:1rem;">
                         <input type="checkbox" id="cfgProxychains">
                         <label style="font-size:0.8rem; font-weight:600;">Proxychains Mode</label>
                     </div>
@@ -558,7 +554,6 @@ DASHBOARD_TEMPLATE = r"""
                 document.getElementById('cfgPorts').value = cfg.ports;
                 document.getElementById('cfgProxy').value = cfg.proxy || '';
                 document.getElementById('cfgTech').checked = cfg.tech;
-                document.getElementById('cfgExtractLinks').checked = cfg.extract_links;
                 document.getElementById('cfgProxychains').checked = cfg.proxychains;
                 document.getElementById('cfgInsecure').checked = cfg.insecure;
                 document.getElementById('cfgOutputDir').value = cfg.output_dir;
@@ -584,7 +579,6 @@ DASHBOARD_TEMPLATE = r"""
                 ports: document.getElementById('cfgPorts').value,
                 proxy: document.getElementById('cfgProxy').value || null,
                 tech: document.getElementById('cfgTech').checked,
-                extract_links: document.getElementById('cfgExtractLinks').checked,
                 proxychains: document.getElementById('cfgProxychains').checked,
                 insecure: document.getElementById('cfgInsecure').checked,
                 output_dir: document.getElementById('cfgOutputDir').value

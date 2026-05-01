@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+import json
 import click
 import webbrowser
 from datetime import datetime
@@ -21,7 +22,8 @@ def cli():
     detects underlying technology stacks, and manages targets via a persistent 
     project-based SQLite backend.
     """
-    console.print(r"""[bold cyan]
+    if '--json' not in sys.argv:
+        console.print(r"""[bold cyan]
   ________.__  .__        __   
  /  _____/|  | |__| _____/  |_ 
 /   \  ___|  | |  |/    \   __\
@@ -29,7 +31,7 @@ def cli():
  \______  /____/__|___|  /__|  
         \/             \/      
     [/bold cyan]""")
-    console.print(f"[bold white]Glint v0.6.0[/bold white] | [dim]Web Enumeration Tool[/dim]\n")
+        console.print(f"[bold white]Glint v0.6.0[/bold white] | [dim]Web Enumeration Tool[/dim]\n")
 
 @cli.command()
 @click.argument('key', required=False)
@@ -67,15 +69,17 @@ def config(key, value):
 
 @cli.command()
 @click.option('--input', '-i', type=click.Path(exists=True), help='Path to targets list.')
+@click.option('--project', '-p', default='CLI_Scan', help='Project name for the scan.')
 @click.option('--proxychains', is_flag=True, help='Optimize for use with proxychains.')
-def scan(input, proxychains):
+@click.option('--extract-links', is_flag=True, help='Extract all URLs from the landing page.')
+@click.option('--json', 'json_out', is_flag=True, help='Output results as raw JSON to stdout.')
+def scan(input, project, proxychains, extract_links, json_out):
     """Run a quick scan from the command line using global configuration."""
     if not input:
         console.print("[red][!][/red] No input file provided.")
         return
 
     config = GlintConfig.load()
-    project = "CLI_Scan"
     db = GlintDB(project)
     session_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(db.project_dir, f"scan_{session_time}")
@@ -109,12 +113,20 @@ def scan(input, proxychains):
         session_time=session_time,
         insecure=config.get('insecure', True),
         detect_tech=config.get('tech', True),
+        extract_links=extract_links,
+        quiet=json_out,
         db=db
     )
     
-    console.print(f"[*] Starting CLI scan of {len(pending)} targets...")
+    if not json_out:
+        console.print(f"[*] Starting CLI scan of {len(pending)} targets...")
+    
     results = asyncio.run(engine.run(pending))
     
+    if json_out:
+        print(json.dumps(results, indent=4))
+        return
+
     report_gen = GlintReport(output_dir, session_time=session_time)
     report_path = report_gen.generate(results, project_name=project)
     
