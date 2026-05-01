@@ -1,7 +1,0 @@
-http://google.com
-https://google.com
-http://example.com
-https://github.com
-https://microsoft.com
-127.0.0.1:8000
-https://youtube.com
