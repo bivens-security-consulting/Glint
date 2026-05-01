@@ -68,25 +68,33 @@ def config(key, value):
         console.print(f"[red][!][/red] Failed to update configuration.")
 
 @cli.command()
+@click.argument('target', required=False)
 @click.option('--input', '-i', type=click.Path(exists=True), help='Path to targets list.')
-@click.option('--project', '-p', default='CLI_Scan', help='Project name for the scan.')
+@click.option('--project', '-p', help='Project name for the scan.')
 @click.option('--proxychains', is_flag=True, help='Optimize for use with proxychains.')
+@click.option('--force', is_flag=True, help='Force scan of all targets, even if already completed.')
 @click.option('--extract-links', is_flag=True, help='Extract all URLs from the landing page.')
 @click.option('--json', 'json_out', is_flag=True, help='Output results as raw JSON to stdout.')
-def scan(input, project, proxychains, extract_links, json_out):
+def scan(target, input, project, proxychains, force, extract_links, json_out):
     """Run a quick scan from the command line using global configuration."""
-    if not input:
-        console.print("[red][!][/red] No input file provided.")
+    if not input and not target:
+        console.print("[red][!][/red] No input file or target provided.")
         return
 
-    config = GlintConfig.load()
-    db = GlintDB(project)
+    # Determine project name and scan mode
+    project_name = project or "CLI_Scan"
+    scan_all = True if not project or force else False
+    
+    db = GlintDB(project_name)
     session_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(db.project_dir, f"scan_{session_time}")
     
     # Load targets
-    with open(input, 'r') as f:
-        targets = [line.strip() for line in f if line.strip()]
+    if input:
+        with open(input, 'r') as f:
+            targets = [line.strip() for line in f if line.strip()]
+    else:
+        targets = [target]
     
     # Basic expansion if protocol is missing
     urls = []
@@ -96,14 +104,24 @@ def scan(input, project, proxychains, extract_links, json_out):
             urls.append(f"http://{t}")
             urls.append(f"https://{t}")
             
-    db.sync_targets(urls)
-    pending = db.get_pending_targets()
-    
     # Proxy handling
+    config = GlintConfig.load()
     effective_proxy = config.get('proxy')
     if proxychains or config.get('proxychains'):
         console.print("[*] Proxychains mode enabled.")
         effective_proxy = None
+
+    db.sync_targets(urls)
+    
+    # Determine what to scan based on project mode
+    to_scan = urls if scan_all else db.get_pending_targets()
+
+    if not json_out:
+        console.print(f"[*] Starting CLI scan of {len(to_scan)} targets...")
+    
+    if not to_scan:
+        if not json_out: console.print("[yellow][*][/yellow] No pending targets to scan.")
+        return
 
     engine = GlintEngine(
         output_dir=output_dir,
@@ -117,11 +135,7 @@ def scan(input, project, proxychains, extract_links, json_out):
         quiet=json_out,
         db=db
     )
-    
-    if not json_out:
-        console.print(f"[*] Starting CLI scan of {len(pending)} targets...")
-    
-    results = asyncio.run(engine.run(pending))
+    results = asyncio.run(engine.run(to_scan))
     
     if json_out:
         print(json.dumps(results, indent=4))
