@@ -14,9 +14,10 @@
 
 ---
 
-## Quick Start (Dockerized)
+## Installation & Setup
 
-The recommended way to run Glint is via **Docker Compose**.
+### Docker (Recommended / Cross-Platform)
+The recommended way to run Glint is via Docker, as it bundles all browser dependencies and Node.js requirements.
 
 1. **Start the Control Center**:
    ```bash
@@ -25,13 +26,53 @@ The recommended way to run Glint is via **Docker Compose**.
 2. **Access the Dashboard**:
    Open [http://localhost:8000](http://localhost:8000)
 
+### Windows Native
+Glint can run natively on Windows without a global Node.js/NPM installation.
+
+1. **Install Requirements**:
+   ```powershell
+   pip install -r requirements.txt
+   ```
+2. **Setup Browsers**:
+   ```powershell
+   playwright install chromium
+   ```
+
+### Linux Native (Kali/Debian)
+Linux requires a few extra steps to handle system-level browser dependencies and the Playwright driver.
+
+1. **Install System Dependencies**:
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y nodejs npm
+   # Ensure 'node' command is available
+   sudo ln -s /usr/bin/nodejs /usr/bin/node
+   ```
+2. **Install Requirements & Browsers**:
+   ```bash
+   pip install -r requirements.txt
+   playwright install chromium
+   # Install required Linux shared libraries
+   playwright install-deps
+   ```
+
 ---
 
-## CLI & API Usage
+## Dashboard Usage
+The Dashboard is the primary way to manage projects and view real-time results.
+
+### Launching the Dashboard
+```bash
+python glint.py dash
+```
+Access at [http://localhost:8000](http://localhost:8000).
+
+---
+
+## CLI Usage
 The CLI is a powerful helper for headless scanning or integrating Glint into other automation pipelines.
 
 ### Single Target Mode
-Scan a target directly without a file:
 ```bash
 python glint.py scan "https://google.com" --extract-links
 ```
@@ -43,43 +84,26 @@ python glint.py scan -i targets.txt -p InternalAlpha
 ```
 
 ### API Mode (JSON Output)
-Use the `--json` flag to receive a pure JSON payload. This suppresses headers and logs to `stderr`, keeping `stdout` clean for parsing tools like `jq`.
-
+Use the `--json` flag to receive a pure JSON payload for piping into tools like `jq`.
 ```bash
-# Extract all discovered URLs from a scan using jq
 python glint.py scan -i targets.txt --json | jq '.[].extracted_urls[]'
+```
+
+### Running CLI via Docker
+```bash
+# Perform a scan inside the container
+docker exec -it glint-app python glint.py scan -i targets.txt --json
 ```
 
 | Flag | Description |
 | :--- | :--- |
 | `target` | (Optional) A single URL to scan directly from the command line. |
 | `-i, --input` | Path to a line-delimited target file. |
-| `-p, --project` | Project name. Defaults to `CLI_Scan` (which always re-scans all targets). |
-| `--force` | Force a full re-scan of all targets even in a named project. |
-| `--extract-links` | Scrape all `<a>` tags on the page and include in report/JSON. |
+| `-p, --project` | Project name. Defaults to `CLI_Scan`. |
+| `--force` | Force a full re-scan of all targets. |
+| `--extract-links` | Scrape all `<a>` tags on the page. |
 | `--json` | Output pure JSON to `stdout`. |
 | `--proxychains` | Optimize network timing for proxychains usage. |
-
-### Running CLI via Docker (Zero-Install)
-If you have the Docker container running, you can execute CLI commands inside the container to avoid installing dependencies (Python, Playwright, etc.) on your host machine. This is useful if you are having issues with Playwright on your host machine.
-
-```bash
-# Perform a scan inside the container
-docker exec -it glint-app python glint.py scan -i targets.txt --json
-
-# View config inside the container
-docker exec -it glint-app python glint.py config
-```
-
----
-
-## Linux Troubleshooting
-If you encounter missing binary errors (like `/usr/bin/node`) when running natively on Linux:
-```bash
-sudo apt-get update && sudo apt-get install -y nodejs npm
-sudo ln -s /usr/bin/nodejs /usr/bin/node
-```
-*(Note: The Docker image is unaffected as it uses a pre-configured Playwright environment.)*
 
 ---
 
@@ -92,6 +116,22 @@ Managed via the **Settings** tab in the Dashboard or `python glint.py config`.
 | `timeout` | Page load timeout in milliseconds (default: 30000). |
 | `insecure` | Ignore SSL/TLS certificate errors. |
 | `output_dir` | Local path for project storage (default: projects). |
+
+---
+
+## Troubleshooting
+
+### "node not found" on Linux
+Ensure you have installed `nodejs` and created the symlink:
+```bash
+sudo ln -s /usr/bin/nodejs /usr/bin/node
+```
+
+### Missing shared libraries (Linux)
+If browsers fail to launch, run:
+```bash
+playwright install-deps
+```
 
 ---
 
