@@ -302,7 +302,7 @@ DASHBOARD_TEMPLATE = r"""
                 <label class="info-label">Project Name</label>
                 <input type="text" id="scanProject" style="background:#000; border:1px solid var(--border); color:#fff; padding:0.8rem; width:100%; border-radius:12px; outline:none;" value="{{ active_project or 'Glint' }}">
             </div>
-            <textarea id="scanTargets" placeholder="URL list (one per line)..."></textarea>
+            <textarea id="scanTargets" placeholder="http://example.com&#10;https://example.com&#10;127.0.0.1"></textarea>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                 <span style="font-size:0.75rem; color:var(--dim);">Fast Import:</span>
                 <button class="btn btn-dim" onclick="triggerNmapUpload()" style="padding: 4px 10px; font-size: 0.7rem;">📁 Import Nmap XML</button>
