@@ -348,14 +348,27 @@ DASHBOARD_TEMPLATE = r"""
                     <input type="text" id="cfgProxy" placeholder="e.g. http://127.0.0.1:8080" style="background:#000; border:1px solid var(--border); color:#fff; padding:0.8rem; width:100%; border-radius:12px; outline:none;">
                 </div>
 
-                <div class="form-row" style="background:#111; padding:1.2rem; border-radius:12px; border:1px solid #222;">
+                <div class="form-group">
+                    <label class="info-label">Projects Directory</label>
+                    <input type="text" id="cfgOutputDir" style="background:#000; border:1px solid var(--border); color:#fff; padding:0.8rem; width:100%; border-radius:12px; outline:none;">
+                </div>
+
+                <div class="form-row" style="background:#111; padding:1.2rem; border-radius:12px; border:1px solid #222; flex-wrap: wrap; gap: 1.5rem;">
                     <div style="display:flex; align-items:center; gap:1rem;">
                         <input type="checkbox" id="cfgTech">
                         <label style="font-size:0.8rem; font-weight:600;">Enable Tech Detection</label>
                     </div>
                     <div style="display:flex; align-items:center; gap:1rem;">
+                        <input type="checkbox" id="cfgExtractLinks">
+                        <label style="font-size:0.8rem; font-weight:600;">Extract Links</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:1rem;">
                         <input type="checkbox" id="cfgProxychains">
                         <label style="font-size:0.8rem; font-weight:600;">Proxychains Mode</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:1rem;">
+                        <input type="checkbox" id="cfgInsecure">
+                        <label style="font-size:0.8rem; font-weight:600;">Insecure SSL</label>
                     </div>
                 </div>
             </div>
@@ -545,7 +558,10 @@ DASHBOARD_TEMPLATE = r"""
                 document.getElementById('cfgPorts').value = cfg.ports;
                 document.getElementById('cfgProxy').value = cfg.proxy || '';
                 document.getElementById('cfgTech').checked = cfg.tech;
+                document.getElementById('cfgExtractLinks').checked = cfg.extract_links;
                 document.getElementById('cfgProxychains').checked = cfg.proxychains;
+                document.getElementById('cfgInsecure').checked = cfg.insecure;
+                document.getElementById('cfgOutputDir').value = cfg.output_dir;
                 
                 // Force lock on open
                 settingsLocked = false;
@@ -568,7 +584,10 @@ DASHBOARD_TEMPLATE = r"""
                 ports: document.getElementById('cfgPorts').value,
                 proxy: document.getElementById('cfgProxy').value || null,
                 tech: document.getElementById('cfgTech').checked,
-                proxychains: document.getElementById('cfgProxychains').checked
+                extract_links: document.getElementById('cfgExtractLinks').checked,
+                proxychains: document.getElementById('cfgProxychains').checked,
+                insecure: document.getElementById('cfgInsecure').checked,
+                output_dir: document.getElementById('cfgOutputDir').value
             };
 
             const resp = await fetch('/api/config', {
