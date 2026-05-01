@@ -78,7 +78,17 @@ DASHBOARD_TEMPLATE = r"""
         .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
         .content-scroll { flex-grow: 1; overflow-y: auto; padding: 2rem 3rem; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 2.5rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; padding-bottom: 100px; }
+        
+        .project-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+        .project-card { background: #080808; border: 1px solid var(--border); border-radius: 16px; padding: 2rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; height: 220px; text-decoration: none; color: inherit; position: relative; overflow: hidden; }
+        .project-card:hover { border-color: var(--accent); transform: translateY(-5px); background: #0a0a0a; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .project-card h3 { font-size: 1.4rem; margin-bottom: 0.5rem; color: #fff; }
+        .project-card .proj-stats { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .project-card .proj-stat-item { flex: 1; text-align: center; background: #000; padding: 0.8rem; border-radius: 10px; border: 1px solid #111; }
+        .project-card .proj-stat-val { display: block; font-size: 1.2rem; font-weight: 800; color: var(--accent); }
+        .project-card .proj-stat-lbl { font-size: 0.6rem; text-transform: uppercase; color: var(--dim); letter-spacing: 0.1em; margin-top: 0.2rem; }
+        .project-card .proj-badge { position: absolute; top: 1.5rem; right: 1.5rem; font-size: 0.6rem; background: #111; padding: 4px 8px; border-radius: 4px; color: var(--dim); border: 1px solid #222; }
 
         /* Cards */
         .card {
@@ -240,6 +250,7 @@ DASHBOARD_TEMPLATE = r"""
                         <img src="/media/{{ res.screenshot_path }}" loading="lazy">
                         {% else %}
                         <div style="height:100%; display:flex; align-items:center; justify-content:center; color:#333; font-weight:800;">ERROR</div>
+                        {% endif %}
                         <div class="status-badge badge-{{ ((res.get('status', 0)|int(default=0)) // 100) }}xx">{{ res.get('status') or '???' }}</div>
                     </div>
                     <div class="card-info">
@@ -256,10 +267,41 @@ DASHBOARD_TEMPLATE = r"""
             </div>
         </div>
         {% else %}
-        <div class="content-scroll" style="display:flex; align-items:center; justify-content:center; color:var(--dim);">
-            <div style="text-align:center;">
-                <h2 style="color:#333; font-size:3rem; margin-bottom:1rem;">Select a project to begin</h2>
-                <p>Or click New Scan to start enumerating fresh targets.</p>
+        <div class="content-scroll">
+            <div style="padding: 3rem 2rem 1rem 2rem; text-align:center;">
+                <h2 style="color:#fff; font-size:2.5rem; margin-bottom:0.5rem; font-weight: 800;">Management Dashboard</h2>
+                <p style="color:var(--dim);">Select a project below or click <b style="color:var(--accent);">New Scan</b> to begin.</p>
+            </div>
+            
+            <div class="project-grid">
+                {% for p in project_data %}
+                <a href="/?project={{ p.name }}" class="project-card">
+                    <div class="proj-badge">ACTIVE DATA</div>
+                    <div>
+                        <h3>{{ p.name }}</h3>
+                        <p style="font-size:0.8rem; color:var(--dim);">Engagement Persistence Layer</p>
+                    </div>
+                    <div class="proj-stats">
+                        <div class="proj-stat-item">
+                            <span class="proj-stat-val">{{ p.stats.total }}</span>
+                            <span class="proj-stat-lbl">Targets</span>
+                        </div>
+                        <div class="proj-stat-item">
+                            <span class="proj-stat-val">{{ p.stats.completed }}</span>
+                            <span class="proj-stat-lbl">Scanned</span>
+                        </div>
+                        <div class="proj-stat-item">
+                            <span class="proj-stat-val">{{ p.stats.failed }}</span>
+                            <span class="proj-stat-lbl">Failed</span>
+                        </div>
+                    </div>
+                </a>
+                {% else %}
+                <div style="grid-column: span 3; text-align: center; padding: 5rem; border: 2px dashed #111; border-radius: 20px;">
+                    <h3 style="color:#222; font-size: 2rem;">No Projects Found</h3>
+                    <p style="color:#111;">Start your first scan to see it here.</p>
+                </div>
+                {% endfor %}
             </div>
         </div>
         {% endif %}
@@ -357,6 +399,10 @@ DASHBOARD_TEMPLATE = r"""
                     <div style="display:flex; align-items:center; gap:1rem;">
                         <input type="checkbox" id="cfgTech">
                         <label style="font-size:0.8rem; font-weight:600;">Enable Tech Detection</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:1rem;">
+                        <input type="checkbox" id="cfgExtractLinks">
+                        <label style="font-size:0.8rem; font-weight:600;">Extract Links</label>
                     </div>
                     <div style="display:flex; align-items:center; gap:1rem;">
                         <input type="checkbox" id="cfgProxychains">
@@ -554,6 +600,7 @@ DASHBOARD_TEMPLATE = r"""
                 document.getElementById('cfgPorts').value = cfg.ports;
                 document.getElementById('cfgProxy').value = cfg.proxy || '';
                 document.getElementById('cfgTech').checked = cfg.tech;
+                document.getElementById('cfgExtractLinks').checked = cfg.extract_links;
                 document.getElementById('cfgProxychains').checked = cfg.proxychains;
                 document.getElementById('cfgInsecure').checked = cfg.insecure;
                 document.getElementById('cfgOutputDir').value = cfg.output_dir;
@@ -579,6 +626,7 @@ DASHBOARD_TEMPLATE = r"""
                 ports: document.getElementById('cfgPorts').value,
                 proxy: document.getElementById('cfgProxy').value || null,
                 tech: document.getElementById('cfgTech').checked,
+                extract_links: document.getElementById('cfgExtractLinks').checked,
                 proxychains: document.getElementById('cfgProxychains').checked,
                 insecure: document.getElementById('cfgInsecure').checked,
                 output_dir: document.getElementById('cfgOutputDir').value
@@ -680,6 +728,16 @@ class GlintDashboard:
         active_project = request.args.get('project')
         projects = GlintDB.list_projects()
         
+        project_data = []
+        if not active_project:
+            for p in projects:
+                db = GlintDB(p)
+                stats = db.get_stats()
+                project_data.append({
+                    'name': p,
+                    'stats': stats
+                })
+        
         results = []
         stats = None
         if active_project:
@@ -690,6 +748,7 @@ class GlintDashboard:
         return render_template_string(
             DASHBOARD_TEMPLATE,
             projects=projects,
+            project_data=project_data,
             active_project=active_project,
             results=results,
             stats=stats
@@ -832,6 +891,7 @@ class GlintDashboard:
             session_time=session_time,
             insecure=config.get('insecure', True),
             detect_tech=config.get('tech', True),
+            extract_links=config.get('extract_links', False),
             db=db
         )
         
