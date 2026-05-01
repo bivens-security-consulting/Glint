@@ -4,19 +4,19 @@
 
 ## Key Features
 
-- **Real-time Live Activity Feed**: Watch screenshots and status discoveries pop into your dashboard instantly as Glint captures them.
-- **Dynamic Gallery Injection**: The frontend gallery automatically adds new screenshot cards without requiring a page refresh.
-- **Zero-Install Deployment (Docker)**: Run Glint with a single command. Playwright, Chromium, and all dependencies are fully containerized.
-- **Nmap XML Web Ingestor**: Upload Nmap XML files directly in the browser to instantly populate your target list.
-- **Secure Settings Hub**: Manage concurrency, timeouts, and proxychains via a persistent, lockable configuration UI.
-- **Technology Fingerprinting**: Automatically identify CMS, servers, and frameworks (React, Next.js, Nginx, etc.).
-- **Smart Logic**: Multi-project support with SQLite persistence, cumulative project reporting, and intelligent URL normalization.
+- **Project Management Hub**: View all your engagements at a glance with a real-time 3-wide project grid and live stats.
+- **Real-time Live Activity Feed**: Watch screenshots and status discoveries pop into your dashboard instantly.
+- **URL Extraction (Hunting)**: Automatically extract all valid links from landing pages to discover hidden attack surface.
+- **API-First Architecture**: Pure JSON output mode for seamless integration into automation pipelines.
+- **Zero-Install Deployment (Docker)**: Run Glint with a single command. Playwright, Chromium, and Node.js are fully containerized.
+- **Nmap XML Web Ingestor**: Upload Nmap XML files directly to instantly populate your target list.
+- **Secure Settings Control**: Manage concurrency, timeouts, and proxychains via a persistent, lockable UI.
 
 ---
 
 ## Quick Start (Dockerized)
 
-The recommended way to run Glint is via **Docker Compose** for full persistence and zero configuration.
+The recommended way to run Glint is via **Docker Compose**.
 
 1. **Start the Control Center**:
    ```bash
@@ -28,68 +28,74 @@ The recommended way to run Glint is via **Docker Compose** for full persistence 
 ---
 
 ## CLI & API Usage
-The CLI is a powerful helper for headless scanning or integrating Glint into other automation pipelines (API mode).
+The CLI is a powerful helper for headless scanning or integrating Glint into other automation pipelines.
 
-### Standard Scanning
+### Single Target Mode
+Scan a target directly without a file:
 ```bash
-# Basic scan with default reporting
-python glint.py scan -i targets.txt
+python glint.py scan "https://google.com" --extract-links
+```
 
-# Scan using proxychains and extract all links from landing pages
-python glint.py scan -i targets.txt --proxychains --extract-links
+### Bulk Resume Mode
+Glint tracks state per project. If you use a project name, it will only scan **pending** targets.
+```bash
+python glint.py scan -i targets.txt -p InternalAlpha
 ```
 
 ### API Mode (JSON Output)
-Use the `--json` flag to suppress human-readable output and receive a pure JSON payload. This is ideal for piping into other tools like `jq` or external APIs.
+Use the `--json` flag to receive a pure JSON payload. This suppresses headers and logs to `stderr`, keeping `stdout` clean for parsing tools like `jq`.
 
 ```bash
-# Scan and pipe results into a JSON file
-python glint.py scan -i targets.txt --extract-links --json > results.json
-
-# Extract only valid URLs discovered from the scan
-python glint.py scan -i targets.txt --extract-links --json | jq '.[].extracted_urls[]'
+# Extract all discovered URLs from a scan using jq
+python glint.py scan -i targets.txt --json | jq '.[].extracted_urls[]'
 ```
 
 | Flag | Description |
 | :--- | :--- |
-| `-i, --input` | Path to the line-delimited target file. |
-| `--extract-links` | Scrape and resolve all `<a>` tags on the page. |
-| `--json` | Output pure JSON to `stdout` (logs/errors go to `stderr`). |
-| `--proxychains` | Optimize network timing for proxychains. |
+| `target` | (Optional) A single URL to scan directly from the command line. |
+| `-i, --input` | Path to a line-delimited target file. |
+| `-p, --project` | Project name. Defaults to `CLI_Scan` (which always re-scans all targets). |
+| `--force` | Force a full re-scan of all targets even in a named project. |
+| `--extract-links` | Scrape all `<a>` tags on the page and include in report/JSON. |
+| `--json` | Output pure JSON to `stdout`. |
+| `--proxychains` | Optimize network timing for proxychains usage. |
+
+### Running CLI via Docker (Zero-Install)
+If you have the Docker container running, you can execute CLI commands inside the container to avoid installing dependencies (Python, Playwright, etc.) on your host machine. This is useful if you are having issues with Playwright on your host machine.
+
+```bash
+# Perform a scan inside the container
+docker exec -it glint-app python glint.py scan -i targets.txt --json
+
+# View config inside the container
+docker exec -it glint-app python glint.py config
+```
 
 ---
 
-## Remote File Access
-Glint stores all assets in the `projects/` directory. When running as an API, you can retrieve screenshots by referencing the `screenshot` filename returned in the JSON payload:
-- **Local Path**: `projects/screenshots/<filename>`
-- **Web App (if running)**: `http://localhost:8000/media/screenshots/<filename>`
-
----
-
-## Project Structure
-
-Glint keeps your data organized by engagement:
-- `projects/`: Root directory for all scan data.
-  - `{ProjectName}.db`: Persistence layer.
-  - `{ProjectName}_report.html`: Cumulative searchable report.
-  - `screenshots/`: High-fidelity visual evidence.
+## Linux Troubleshooting
+If you encounter missing binary errors (like `/usr/bin/node`) when running natively on Linux:
+```bash
+sudo apt-get update && sudo apt-get install -y nodejs npm
+sudo ln -s /usr/bin/nodejs /usr/bin/node
+```
+*(Note: The Docker image is unaffected as it uses a pre-configured Playwright environment.)*
 
 ---
 
 ## Configuration
-
-Configuration is stored in `.glint_config.yaml` and can be managed via the **Settings** tab in the Dashboard.
+Managed via the **Settings** tab in the Dashboard or `python glint.py config`.
 
 | Option | Description |
 | :--- | :--- |
-| `concurrency` | Number of simultaneous Playwright instances. |
-| `timeout` | Page load timeout in seconds. |
-| `proxychains` | Enable TOR/Proxychains routing. |
+| `concurrency` | Number of simultaneous browser instances (default: 5). |
+| `timeout` | Page load timeout in milliseconds (default: 30000). |
+| `insecure` | Ignore SSL/TLS certificate errors. |
+| `output_dir` | Local path for project storage (default: projects). |
 
 ---
 
 ## Security Disclaimer
-
 Glint is intended for use by security professionals for authorized testing only. Users must ensure legal authorization before scanning web services.
 
 ## License
